@@ -1,4 +1,4 @@
-# function that computes finite differences for each feature for 2 input (x and x1)
+# function that computes finite differences for each feature for 2 inputis (x and x1)
 import numpy as np
 import torch
 import pdb

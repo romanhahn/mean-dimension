@@ -39,30 +39,20 @@ from sacreddnn.utils import num_params, l2_norm, run_and_config_to_path, \
 @ex.config  # Configuration is defined through local variables.
 def cfg():
     batch_size = 128    # input batch size for training
-    #epochs = 100        # number of epochs to train
-    #lr = 0.1            # learning rate
-    #weight_decay = 5e-4 # weight decay param (=L2 reg. Good value is 5e-4)
     no_cuda = False     # disables CUDA training
     nthreads = 2        # number of threads
-    #save_model = False  # save current model to path
-    #save_epoch = 10     # save every save_epoch model
-    #keep_models = False # keep all saved models
     load_model = ""     # load model from path
-    #droplr = 5          # learning rate drop factor (use 0 for no-drop)
-    #opt = "nesterov"    # optimizer type
     loss = "nll"        # classification loss [nll, mse]
     model = "lenet"     # model type  [lenet, densenet,...]  
     dataset = "cifar10" # dataset  [mnist, fashion, cifar10, cifar100]
     datapath = '~/data/'# folder containing the datasets (e.g. mnist will be in "data/MNIST")
-    #logtime = 2         # report every logtime epochs
     M = -1              # take only first M training examples 
     Mtest = -1          # take only first Mtest test examples 
     pclass = -1         # take only pclass training examples for each class 
     preprocess = False  # data normalization
-    gpu = 0           # gpu_id to use
+    gpu = 0             # gpu_id to use
     pca = True
     alpha = 1
-    #last_layer =False
 # ROBUST ENSEMBLE SPECIFIC
     y=1                 # number of replicas
     use_center=False    # use a central replica
@@ -86,14 +76,11 @@ def main(_run, _config):
     print_config(_run);
     
 
-
-    logdir = file_observer_dir(_run)
-    if not logdir is None:
-        from torch.utils.tensorboard import SummaryWriter
-        writer = SummaryWriter(log_dir=f"{logdir}/{run_and_config_to_path(_run, _config)}")
-
-    #if args.save_model:  # make temp file. In the end, the model will be stored by the observers.
-    #    save_path = tempfile.mkdtemp() + "/model.pt"
+    # if saved with oberserver:
+    #logdir = file_observer_dir(_run)
+    #if not logdir is None:
+    #    from torch.utils.tensorboard import SummaryWriter
+    #    writer = SummaryWriter(log_dir=f"{logdir}/{run_and_config_to_path(_run, _config)}")
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     print("USING CUDA =", use_cuda)
@@ -143,11 +130,7 @@ def main(_run, _config):
     loss_entr = torch.nn.CrossEntropyLoss(reduction='none')
     sm = torch.nn.Softmax(dim=1)
     alpha =args.alpha
-    # Save model after training
-    #if args.save_model:
-    #    ex.add_artifact(save_path, content_type="application/octet-stream")
 
-###################### new code ################################################################################################
 
     model = center
     # choose outputs for which to estimate mean dimension
@@ -235,8 +218,18 @@ def main(_run, _config):
             MD[str(mod)]=(torch.sum(agg[mod][1][1],0)/(2*agg[mod][0][1])).cpu()
             i+=1
         
+        # saving results (mean dimension and total effects (if needed))
+
         # save mean dimension 
         MD_file = open(mydir+"/MD_train.pkl","wb")
         pickle.dump(MD, MD_file)
         MD_file.close()
+        
+        
+        if args.layer=='nll' & pca==False:
+            # save totals 
+            totals_file = open(mydir+"/totals.pkl","wb")
+            pickle.dump(agg['nll'][1][1]/2,totals_file)
+            totals_file.close()
+
 

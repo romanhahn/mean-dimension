@@ -145,7 +145,7 @@ def main(_run, _config):
     if not logdir is None:
         from torch.utils.tensorboard import SummaryWriter
         writer = SummaryWriter(log_dir=f"{logdir}/{run_and_config_to_path(_run, _config)}")
-
+    pdb.set_trace()
     if args.save_model: # make temp file. In the end, the model will be stored by the observers.
         save_prefix = tempfile.mkdtemp() + "/model"
 
